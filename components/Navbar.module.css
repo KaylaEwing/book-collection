@@ -1,0 +1,165 @@
+/* Figma: white bar, 64px tall, content max 1000px, 24px side padding */
+.header {
+  background: var(--color-surface);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.nav {
+  max-width: var(--content-width);
+  min-height: 64px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.name {
+  font-family: var(--font-ui);
+  font-weight: 900;
+  font-size: 20px;
+  line-height: 38px;
+  color: var(--color-text-dark);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.menuButton {
+  display: none;
+  min-height: 42px;
+  padding: 6px 14px;
+  background: transparent;
+  border: 2px solid var(--color-text-dark);
+  border-radius: var(--radius-button);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--color-text-dark);
+  cursor: pointer;
+}
+
+/* Links and button sit 40px apart */
+.extra {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+
+.links {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.link {
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 38px;
+  color: var(--color-text-dark);
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+}
+
+.link:hover {
+  border-bottom-color: #bbbbbb;
+}
+
+.link[aria-current="page"] {
+  border-bottom-color: var(--color-background);
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user {
+  font-weight: 500;
+  color: var(--color-text-dark);
+}
+
+/* Black button: 42px tall, 16px x 10px padding, 8px radius, 80% text opacity */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  padding: 10px 16px;
+  background: var(--color-button-dark);
+  border: none;
+  border-radius: var(--radius-button);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 18px;
+  color: rgba(221, 221, 221, 0.8);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.button:hover {
+  color: var(--color-button-dark-text);
+}
+
+/* ---------- Tablet and phone: collapsible menu ---------- */
+@media (max-width: 760px) {
+  .nav {
+    padding: 11px 16px;
+  }
+
+  .menuButton {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .extra {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding-bottom: 8px;
+  }
+
+  .open {
+    display: flex;
+  }
+
+  .links {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  .link {
+    display: block;
+    padding: 6px 0;
+    border-bottom: 1px solid #e5e5e5;
+  }
+
+  .link[aria-current="page"] {
+    border-bottom: 2px solid var(--color-background);
+  }
+
+  .account {
+    justify-content: space-between;
+  }
+
+  .button {
+    width: 100%;
+  }
+
+  .account .button {
+    width: auto;
+  }
+}
