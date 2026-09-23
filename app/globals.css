@@ -276,3 +276,34 @@ main a:not([class]) {
   color: inherit;
   text-underline-offset: 3px;
 }
+
+/* Outline version of the white button, for Cancel */
+.btn-light-outline {
+  background: transparent;
+  color: var(--color-text-light);
+  border: 2px solid var(--color-text-light);
+}
+
+.btn-light-outline:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Long titles or author names with no spaces used to push the page
+   sideways on narrow screens. This makes them wrap instead. */
+body {
+  overflow-wrap: break-word;
+}
+
+.page-title,
+.lead,
+.field-label {
+  overflow-wrap: anywhere;
+}
+
+/* Every button and link target is at least 44px tall, which is the
+   recommended minimum tap size on phones */
+.btn-light,
+.btn-dark,
+.btn-outline {
+  min-height: 48px;
+}

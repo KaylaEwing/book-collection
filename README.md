@@ -32,10 +32,29 @@ Until the backend is built, accounts and books are saved in the browser with `lo
 The functions in `components/AuthProvider.js` and `components/BooksProvider.js` are the only
 places that need to change when switching to Supabase.
 
+## Tests
+
+The project uses Playwright for automated browser tests.
+
+```bash
+npx playwright install   # one time only, downloads the test browser
+npm test                 # runs every test
+npm run test:responsive  # runs only the responsive design tests
+npm run test:ui          # opens the test runner in a window
+```
+
+`tests/responsive.spec.js` checks each page at 320, 390, 768, 1024, and 1440 pixels wide.
+`tests/features.spec.js` checks registering, logging in, and the create, read, update, and delete actions.
+
+## Branches
+
+Work for each week is done on its own branch (for example `week-3`) and merged into `main` when it's finished and tested.
+
 ## Project structure
 
 ```
 app/                 pages (one folder per route)
 components/          Navbar, forms, providers, dialog
 lib/books.js         reading statuses, sort options, sample books
+tests/               automated browser tests
 ```

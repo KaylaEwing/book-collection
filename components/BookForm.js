@@ -4,6 +4,7 @@ import { useState } from "react";
 import { STATUSES } from "@/lib/books";
 
 const EMPTY = { title: "", author: "", status: "want", rating: "", notes: "" };
+const NOTES_MAX = 500;
 
 // Shared form for Add Book and Edit Book.
 export default function BookForm({ initial, submitLabel, onSubmit, onCancel }) {
@@ -80,13 +81,16 @@ export default function BookForm({ initial, submitLabel, onSubmit, onCancel }) {
       <div className="field">
         <label htmlFor="notes" className="field-label">Notes</label>
         <span id="notes-hint" className="field-hint">Optional. Thoughts, quotes, or who recommended it.</span>
-        <textarea id="notes" name="notes" className="textarea" value={values.notes} onChange={update}
-          aria-describedby="notes-hint" />
+        <textarea id="notes" name="notes" className="textarea" maxLength={NOTES_MAX} value={values.notes}
+          onChange={update} aria-describedby="notes-hint notes-count" />
+        <span id="notes-count" className="field-hint" aria-live="polite">
+          {values.notes.length} of {NOTES_MAX} characters
+        </span>
       </div>
 
       <div className="button-row">
         <button type="submit" className="btn-light">{submitLabel}</button>
-        <button type="button" className="btn-light" style={{ background: "transparent", color: "#fff", border: "2px solid #fff" }} onClick={onCancel}>
+        <button type="button" className="btn-light btn-light-outline" onClick={onCancel}>
           CANCEL
         </button>
       </div>

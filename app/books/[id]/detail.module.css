@@ -1,0 +1,81 @@
+.back {
+  display: inline-block;
+  min-height: 44px;
+  padding-top: 10px;
+  color: var(--color-text-light);
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.want { background: #e8eef9; color: #1f3f7a; }
+.reading { background: #fdf1d0; color: #6b4c00; }
+.read { background: #e3f2e6; color: #1d5a2b; }
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 10px 24px;
+  margin: 20px 0 0;
+  font-size: 17px;
+}
+
+.facts dt { font-weight: 600; }
+.facts dd { margin: 0; overflow-wrap: anywhere; }
+
+.quick {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e2e2;
+}
+
+.quickLabel {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.quickButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quickButton {
+  min-height: 44px;
+  padding: 8px 16px;
+  background: #ffffff;
+  color: var(--color-text-dark);
+  border: 2px solid #cccccc;
+  border-radius: 999px;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.quickButton:hover { border-color: #888888; }
+
+.quickButton[aria-pressed="true"] {
+  background: var(--color-background);
+  border-color: var(--color-background);
+  color: #ffffff;
+}
+
+.notesHeading {
+  margin-top: 28px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 26px;
+}
+
+.notes {
+  margin-top: 8px;
+  font-size: 17px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
