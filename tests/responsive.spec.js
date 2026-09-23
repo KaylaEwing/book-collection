@@ -88,11 +88,16 @@ test("buttons stay big enough to tap on a phone", async ({ page }) => {
   await signIn(page, "tapuser");
   await page.goto("/books");
 
-  const buttons = await page.getByRole("button").all();
+  // Only the site's own buttons. While `npm run dev` is running, Next.js adds
+  // a small dev-tools button in the corner that isn't part of the site.
+  const buttons = await page.locator("header button, main button").all();
+  expect(buttons.length).toBeGreaterThan(0);
+
   for (const button of buttons) {
     if (!(await button.isVisible())) continue;
     const box = await button.boundingBox();
-    expect(box.height).toBeGreaterThanOrEqual(40);
+    const name = (await button.textContent())?.trim();
+    expect(box.height, `"${name}" is too short to tap`).toBeGreaterThanOrEqual(40);
   }
 });
 
