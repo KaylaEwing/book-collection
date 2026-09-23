@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo } from "react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import RequireAuth from "@/components/RequireAuth";
 import StarRating from "@/components/StarRating";
 import { useBooks } from "@/components/BooksProvider";
@@ -10,14 +11,32 @@ import styles from "./books.module.css";
 
 function BookList() {
   const { books, loaded } = useBooks();
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("all");
-  const [sort, setSort] = useState("updated");
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
 
-  const counts = useMemo(() => {
-    const c = { all: books.length };
-    STATUSES.forEach((s) => (c[s.value] = books.filter((b) => b.status === s.value).length));
-    return c;
+  // The search, filter, and sort settings live in the address bar, so the
+  // view survives a refresh and can be shared or bookmarked.
+  const query = params.get("q") ?? "";
+  const status = params.get("status") ?? "all";
+  const sort = params.get("sort") ?? "updated";
+
+  function setParam(key, value) {
+    const next = new URLSearchParams(params.toString());
+    if (!value || value === "all" || (key === "sort" && value === "updated")) next.delete(key);
+    else next.set(key, value);
+    const qs = next.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }
+
+  const stats = useMemo(() => {
+    const counts = { all: books.length };
+    STATUSES.forEach((s) => (counts[s.value] = books.filter((b) => b.status === s.value).length));
+    const rated = books.filter((b) => b.rating);
+    const average = rated.length
+      ? (rated.reduce((sum, b) => sum + b.rating, 0) / rated.length).toFixed(1)
+      : null;
+    return { counts, average, ratedCount: rated.length };
   }, [books]);
 
   const shown = useMemo(() => {
@@ -33,12 +52,13 @@ function BookList() {
       author: (a, b) => a.author.localeCompare(b.author),
       rating: (a, b) => (b.rating ?? 0) - (a.rating ?? 0),
     };
-    return [...list].sort(sorters[sort]);
+    return [...list].sort(sorters[sort] ?? sorters.updated);
   }, [books, query, status, sort]);
 
   if (!loaded) return <p className="status-text">Loading your books…</p>;
 
   const tabs = [{ value: "all", label: "All" }, ...STATUSES];
+  const filtering = query.trim() !== "" || status !== "all";
 
   return (
     <>
@@ -47,7 +67,26 @@ function BookList() {
         <Link href="/books/new" className="btn-light">ADD A BOOK</Link>
       </div>
 
-      {/* Status filter with counts */}
+      {/* Reading summary */}
+      <dl className={styles.stats}>
+        <div className={styles.stat}>
+          <dt>Books</dt>
+          <dd>{stats.counts.all}</dd>
+        </div>
+        <div className={styles.stat}>
+          <dt>Finished</dt>
+          <dd>{stats.counts.read}</dd>
+        </div>
+        <div className={styles.stat}>
+          <dt>Reading now</dt>
+          <dd>{stats.counts.reading}</dd>
+        </div>
+        <div className={styles.stat}>
+          <dt>Average rating</dt>
+          <dd>{stats.average ? `${stats.average} / 5` : "—"}</dd>
+        </div>
+      </dl>
+
       <div className={styles.tabs} role="group" aria-label="Filter by reading status">
         {tabs.map((t) => (
           <button
@@ -55,9 +94,9 @@ function BookList() {
             type="button"
             className={styles.tab}
             aria-pressed={status === t.value}
-            onClick={() => setStatus(t.value)}
+            onClick={() => setParam("status", t.value)}
           >
-            {t.label} <span className={styles.count}>{counts[t.value]}</span>
+            {t.label} <span className={styles.count}>{stats.counts[t.value]}</span>
           </button>
         ))}
       </div>
@@ -71,12 +110,12 @@ function BookList() {
             className="input"
             placeholder="Title or author"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => setParam("q", e.target.value)}
           />
         </div>
         <div className="field">
           <label htmlFor="sort" className="field-label">Sort by</label>
-          <select id="sort" className="select" value={sort} onChange={(e) => setSort(e.target.value)}>
+          <select id="sort" className="select" value={sort} onChange={(e) => setParam("sort", e.target.value)}>
             {SORT_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
@@ -84,9 +123,16 @@ function BookList() {
         </div>
       </div>
 
-      <p className={styles.resultCount} aria-live="polite">
-        Showing {shown.length} of {books.length} {books.length === 1 ? "book" : "books"}
-      </p>
+      <div className={styles.resultRow}>
+        <p className={styles.resultCount} aria-live="polite">
+          Showing {shown.length} of {books.length} {books.length === 1 ? "book" : "books"}
+        </p>
+        {filtering && (
+          <button type="button" className={styles.clear} onClick={() => router.replace(pathname, { scroll: false })}>
+            Clear filters
+          </button>
+        )}
+      </div>
 
       {books.length === 0 ? (
         <div className="panel center">
@@ -101,7 +147,7 @@ function BookList() {
           <p className="lead">No books match. Try a different search or choose All.</p>
         </div>
       ) : (
-        <ul className={styles.grid}>
+        <ul className={styles.grid} data-testid="book-grid">
           {shown.map((book) => (
             <li key={book.id}>
               <Link href={`/books/${book.id}`} className={styles.card}>
@@ -124,7 +170,10 @@ export default function BooksPage() {
   return (
     <div className="container">
       <RequireAuth>
-        <BookList />
+        {/* useSearchParams needs a Suspense boundary in the App Router */}
+        <Suspense fallback={<p className="status-text">Loading your books…</p>}>
+          <BookList />
+        </Suspense>
       </RequireAuth>
     </div>
   );

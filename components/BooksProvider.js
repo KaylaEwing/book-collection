@@ -31,28 +31,49 @@ export function BooksProvider({ children }) {
     setLoaded(true);
   }, [user]);
 
-  function save(next) {
-    setBooks(next);
-    if (!user) return;
-    try {
-      localStorage.setItem(keyFor(user.id), JSON.stringify(next));
-    } catch {}
+  // Takes a function so every change is based on the newest list, not on a
+  // copy captured earlier. This is what stopped Undo from adding duplicates.
+  function save(updater) {
+    setBooks((current) => {
+      const next = updater(current);
+      if (user) {
+        try {
+          localStorage.setItem(keyFor(user.id), JSON.stringify(next));
+        } catch {}
+      }
+      return next;
+    });
   }
 
   function addBook(fields) {
     const now = new Date().toISOString();
     const book = { id: makeId(), userId: user.id, ...fields, createdAt: now, updatedAt: now };
-    save([book, ...books]);
+    save((current) => [book, ...current]);
     return book;
   }
 
   function updateBook(id, fields) {
     const now = new Date().toISOString();
-    save(books.map((b) => (b.id === id ? { ...b, ...fields, updatedAt: now } : b)));
+    save((current) => current.map((b) => (b.id === id ? { ...b, ...fields, updatedAt: now } : b)));
   }
 
+  // Returns the deleted book and its position so it can be put back (Undo)
   function deleteBook(id) {
-    save(books.filter((b) => b.id !== id));
+    const index = books.findIndex((b) => b.id === id);
+    if (index === -1) return null;
+    const removed = books[index];
+    save((current) => current.filter((b) => b.id !== id));
+    return { book: removed, index };
+  }
+
+  function restoreBook(book, index) {
+    save((current) => {
+      // Don't add it twice if Undo is somehow clicked more than once
+      if (current.some((b) => b.id === book.id)) return current;
+      const next = [...current];
+      next.splice(Math.min(index, next.length), 0, book);
+      return next;
+    });
   }
 
   function getBook(id) {
@@ -60,7 +81,7 @@ export function BooksProvider({ children }) {
   }
 
   return (
-    <BooksContext.Provider value={{ books, loaded, addBook, updateBook, deleteBook, getBook }}>
+    <BooksContext.Provider value={{ books, loaded, addBook, updateBook, deleteBook, restoreBook, getBook }}>
       {children}
     </BooksContext.Provider>
   );

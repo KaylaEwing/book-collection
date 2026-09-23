@@ -3,6 +3,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { AuthProvider } from "@/components/AuthProvider";
 import { BooksProvider } from "@/components/BooksProvider";
+import { ToastProvider } from "@/components/Toast";
 import "./globals.css";
 
 // Fonts from the Figma design
@@ -20,6 +21,13 @@ const happyMonkey = Happy_Monkey({
   display: "swap",
 });
 
+// Makes the site scale correctly on phones
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#6d1a1b",
+};
+
 export const metadata = {
   title: "Book Collection | Kayla Ewing",
   description:
@@ -35,9 +43,11 @@ export default function RootLayout({ children }) {
         </a>
         <AuthProvider>
           <BooksProvider>
-            <Navbar />
-            <main id="main">{children}</main>
-            <Footer />
+            <ToastProvider>
+              <Navbar />
+              <main id="main">{children}</main>
+              <Footer />
+            </ToastProvider>
           </BooksProvider>
         </AuthProvider>
       </body>

@@ -5,11 +5,13 @@ import { useParams, useRouter } from "next/navigation";
 import RequireAuth from "@/components/RequireAuth";
 import BookForm from "@/components/BookForm";
 import { useBooks } from "@/components/BooksProvider";
+import { useToast } from "@/components/Toast";
 
 function EditBook() {
   const { id } = useParams();
   const router = useRouter();
   const { getBook, updateBook, loaded } = useBooks();
+  const { showToast } = useToast();
 
   if (!loaded) return <p className="status-text">Loading…</p>;
 
@@ -34,6 +36,7 @@ function EditBook() {
         onSubmit={(fields) => {
           updateBook(book.id, fields);
           router.push(`/books/${book.id}`);
+          showToast("Your changes were saved.");
         }}
         onCancel={() => router.push(`/books/${book.id}`)}
       />
