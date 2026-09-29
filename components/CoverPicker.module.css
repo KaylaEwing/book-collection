@@ -1,0 +1,53 @@
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.preview,
+.empty {
+  width: 96px;
+  height: 144px;
+  flex: 0 0 auto;
+  object-fit: cover;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px dashed rgba(255, 255, 255, 0.5);
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* The real file box is hidden because the styled button opens it,
+   but it stays in the page so tests and screen readers can use it */
+.input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.note {
+  margin-top: 8px;
+  min-height: 22px;
+  font-size: 15px;
+}
+
+@media (max-width: 480px) {
+  .buttons {
+    flex: 1;
+  }
+}

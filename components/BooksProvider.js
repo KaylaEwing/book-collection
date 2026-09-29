@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { useAuth } from "./AuthProvider";
+import { useToast } from "./Toast";
 import { makeId, sampleBooks } from "@/lib/books";
 
 // TEMPORARY book storage in the browser, one list per user.
@@ -13,6 +14,7 @@ const keyFor = (userId) => `bookcollection-books-${userId}`;
 
 export function BooksProvider({ children }) {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [books, setBooks] = useState([]);
   const [loaded, setLoaded] = useState(false);
 
@@ -39,7 +41,12 @@ export function BooksProvider({ children }) {
       if (user) {
         try {
           localStorage.setItem(keyFor(user.id), JSON.stringify(next));
-        } catch {}
+        } catch {
+          // Browser storage is limited (about 5 MB), and cover pictures use
+          // most of it, so tell the user instead of failing silently.
+          showToast("Your browser storage is full. Remove a cover picture and try again.");
+          return current;
+        }
       }
       return next;
     });

@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { STATUSES } from "@/lib/books";
+import CoverPicker from "./CoverPicker";
 
-const EMPTY = { title: "", author: "", status: "want", rating: "", notes: "" };
+const EMPTY = { title: "", author: "", status: "want", rating: "", notes: "", cover: null };
 const NOTES_MAX = 500;
 
 // Shared form for Add Book and Edit Book.
@@ -36,6 +37,7 @@ export default function BookForm({ initial, submitLabel, onSubmit, onCancel }) {
       status: values.status,
       rating: values.rating ? Number(values.rating) : null,
       notes: values.notes.trim(),
+      cover: values.cover ?? null,
     });
   }
 
@@ -77,6 +79,8 @@ export default function BookForm({ initial, submitLabel, onSubmit, onCancel }) {
           </select>
         </div>
       </div>
+
+      <CoverPicker value={values.cover} onChange={(cover) => setValues((v) => ({ ...v, cover }))} />
 
       <div className="field">
         <label htmlFor="notes" className="field-label">Notes</label>

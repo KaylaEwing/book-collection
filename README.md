@@ -43,8 +43,20 @@ npm run test:responsive  # runs only the responsive design tests
 npm run test:ui          # opens the test runner in a window
 ```
 
-`tests/responsive.spec.js` checks each page at 320, 390, 768, 1024, and 1440 pixels wide.
-`tests/features.spec.js` checks registering, logging in, and the create, read, update, and delete actions.
+There are 38 tests in four files:
+
+- `tests/responsive.spec.js` — each page at 320, 390, 768, 1024, and 1440 pixels wide
+- `tests/features.spec.js` — registering, logging in, create, read, update, delete, undo, filters, export
+- `tests/pages.spec.js` — every page loads, navigation links, page titles, form labels
+- `tests/media.spec.js` — cover pictures are shrunk, lazy loaded, and have alt text
+
+## Cover pictures
+
+Covers are shrunk in the browser before they are saved. `lib/images.js` draws the
+picture onto a canvas at no more than 400 x 600 pixels and saves it as WebP at 80%
+quality, which takes a typical phone photo from several megabytes down to well under
+100 KB. Browser storage only holds about 5 MB, so this keeps a collection from
+filling it up.
 
 ## Branches
 

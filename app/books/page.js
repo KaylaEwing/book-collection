@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import RequireAuth from "@/components/RequireAuth";
 import StarRating from "@/components/StarRating";
+import BookCover from "@/components/BookCover";
+import ExportButton from "@/components/ExportButton";
 import { useBooks } from "@/components/BooksProvider";
 import { STATUSES, SORT_OPTIONS, statusLabel } from "@/lib/books";
 import styles from "./books.module.css";
@@ -64,7 +66,10 @@ function BookList() {
     <>
       <div className={styles.header}>
         <h1 className="page-title">My Books</h1>
-        <Link href="/books/new" className="btn-light">ADD A BOOK</Link>
+        <div className={styles.headerButtons}>
+          <ExportButton />
+          <Link href="/books/new" className="btn-light">ADD A BOOK</Link>
+        </div>
       </div>
 
       {/* Reading summary */}
@@ -151,12 +156,15 @@ function BookList() {
           {shown.map((book) => (
             <li key={book.id}>
               <Link href={`/books/${book.id}`} className={styles.card}>
-                <span className={`${styles.badge} ${styles[book.status]}`}>
-                  {statusLabel(book.status)}
+                <BookCover book={book} />
+                <span className={styles.cardText}>
+                  <span className={`${styles.badge} ${styles[book.status]}`}>
+                    {statusLabel(book.status)}
+                  </span>
+                  <span className={styles.title}>{book.title}</span>
+                  <span className={styles.author}>{book.author}</span>
+                  <StarRating value={book.rating} />
                 </span>
-                <span className={styles.title}>{book.title}</span>
-                <span className={styles.author}>{book.author}</span>
-                <StarRating value={book.rating} />
               </Link>
             </li>
           ))}

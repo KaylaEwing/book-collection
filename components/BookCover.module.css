@@ -1,0 +1,32 @@
+.cover {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #dddddd;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.card {
+  width: 64px;
+  height: 96px;
+  flex: 0 0 auto;
+}
+
+.detail {
+  width: 120px;
+  height: 180px;
+  flex: 0 0 auto;
+}
+
+.placeholder {
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 1px;
+}
+
+.detail.placeholder {
+  font-size: 34px;
+}

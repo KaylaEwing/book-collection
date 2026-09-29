@@ -33,6 +33,7 @@ test("a book can be created, edited, and deleted", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Dracula" })).toBeVisible();
 
   await page.getByRole("link", { name: "Edit book" }).click();
+  await page.waitForURL(/\/edit$/);
   await expect(page.locator("#title")).toHaveValue("Dracula");
   await page.fill("#title", "Dracula (Annotated)");
   await page.getByRole("button", { name: "SAVE CHANGES" }).click();
@@ -105,4 +106,41 @@ test("the reading summary counts books correctly", async ({ page }) => {
 
   await page.goto("/books");
   await expect(finished).toHaveText(String(before + 1));
+});
+
+test("the collection can be exported to a file", async ({ page }) => {
+  await signIn(page, "exportuser");
+  await addBook(page, "Exported Book", "Some Author", "read", "5");
+  await page.goto("/books");
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "EXPORT" }).click();
+  const download = await downloadPromise;
+
+  expect(download.suggestedFilename()).toMatch(/^book-collection-\d{4}-\d{2}-\d{2}\.json$/);
+
+  const stream = await download.createReadStream();
+  const chunks = [];
+  for await (const chunk of stream) chunks.push(chunk);
+  const data = JSON.parse(Buffer.concat(chunks).toString());
+
+  expect(data.bookCount).toBe(data.books.length);
+  expect(data.books.some((b) => b.title === "Exported Book")).toBe(true);
+});
+
+test("notes are limited to 500 characters", async ({ page }) => {
+  await signIn(page, "notesuser");
+  await page.goto("/books/new");
+  await page.fill("#notes", "x".repeat(600));
+  await expect(page.locator("#notes")).toHaveValue("x".repeat(500));
+  await expect(page.getByText("500 of 500 characters")).toBeVisible();
+});
+
+test("each user only sees their own books", async ({ page }) => {
+  await signIn(page, "userone");
+  await addBook(page, "Private Book", "Only Mine");
+  await page.getByRole("button", { name: "Log out" }).click();
+
+  await signIn(page, "usertwo");
+  await expect(page.getByTestId("book-grid").getByText("Private Book")).toHaveCount(0);
 });
