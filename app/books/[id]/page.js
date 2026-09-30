@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import RequireAuth from "@/components/RequireAuth";
 import StarRating from "@/components/StarRating";
+import BookCover from "@/components/BookCover";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useBooks } from "@/components/BooksProvider";
 import { useToast } from "@/components/Toast";
@@ -67,8 +68,13 @@ function BookDetail() {
       <Link href="/books" className={styles.back}>Back to My Books</Link>
 
       <article className="panel" style={{ marginTop: 16 }}>
-        <span className={`${styles.badge} ${styles[book.status]}`}>{statusLabel(book.status)}</span>
-        <h1 className="page-title" style={{ marginTop: 10 }}>{book.title}</h1>
+        <div className={styles.head}>
+          <BookCover book={book} size="detail" />
+          <div>
+            <span className={`${styles.badge} ${styles[book.status]}`}>{statusLabel(book.status)}</span>
+            <h1 className="page-title" style={{ marginTop: 10 }}>{book.title}</h1>
+          </div>
+        </div>
 
         <dl className={styles.facts}>
           {rows.map(([label, value]) => (

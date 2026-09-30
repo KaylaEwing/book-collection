@@ -42,13 +42,13 @@ export default function RootLayout({ children }) {
           Skip to content
         </a>
         <AuthProvider>
-          <BooksProvider>
-            <ToastProvider>
+          <ToastProvider>
+            <BooksProvider>
               <Navbar />
               <main id="main">{children}</main>
               <Footer />
-            </ToastProvider>
-          </BooksProvider>
+            </BooksProvider>
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>

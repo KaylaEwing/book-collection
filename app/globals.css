@@ -73,8 +73,10 @@ img {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 171px;
-  height: 48px;
+  /* The mockup's button is 171px wide. Using min-width keeps that size for
+     short labels but lets longer ones like "CHOOSE IMAGE" fit. */
+  min-width: 171px;
+  min-height: 48px;
   padding: 10px 16px;
   background: var(--color-surface);
   color: var(--color-text-dark);

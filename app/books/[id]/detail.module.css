@@ -17,6 +17,18 @@
 .reading { background: #fdf1d0; color: #6b4c00; }
 .read { background: #e3f2e6; color: #1d5a2b; }
 
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+@media (max-width: 480px) {
+  .head {
+    gap: 14px;
+  }
+}
+
 .facts {
   display: grid;
   grid-template-columns: max-content 1fr;
