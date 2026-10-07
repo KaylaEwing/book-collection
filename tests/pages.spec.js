@@ -12,8 +12,8 @@ async function signIn(page, username) {
 }
 
 const GUEST_PAGES = [
-  { path: "/", heading: "WELCOME!" },
-  { path: "/login", heading: "Log in" },
+  { path: "/", heading: "Let’s read!" },
+  { path: "/login", heading: "WELCOME!" },
   { path: "/register", heading: "Create an account" },
   { path: "/about", heading: "About this project" },
 ];
@@ -67,6 +67,25 @@ test("the current page is marked in the navigation", async ({ page }) => {
   await signIn(page, "currentuser");
   await page.goto("/about");
   await expect(page.getByRole("navigation").getByRole("link", { name: "About" })).toHaveAttribute("aria-current", "page");
+});
+
+test("the home page photo has alt text and set dimensions", async ({ page }) => {
+  await page.goto("/");
+  const photo = page.getByAltText(/reading nook/i);
+  await expect(photo).toBeVisible();
+  await expect(photo).toHaveAttribute("width", /\d+/);
+  await expect(photo).toHaveAttribute("height", /\d+/);
+});
+
+test("the home page button sends visitors to log in and members to their books", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("link", { name: "Take me to my books" }).click();
+  await expect(page).toHaveURL(/\/login$/);
+
+  await signIn(page, "homebutton");
+  await page.goto("/");
+  await page.getByRole("link", { name: "Take me to my books" }).click();
+  await expect(page).toHaveURL(/\/books$/);
 });
 
 test("page titles change between pages", async ({ page }) => {

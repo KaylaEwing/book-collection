@@ -8,9 +8,9 @@ Built with Next.js (App Router). Supabase and PostgreSQL will be added for accou
 
 | Page | Path | What it does |
 |---|---|---|
-| Home | `/` | Welcome page with log in form and register button (from Figma) |
+| Home | `/` | Landing page from the Figma home page design, with the "Take me to my books" button |
 | Register | `/register` | Create an account |
-| Log in | `/login` | Log in to an existing account |
+| Log in | `/login` | The Figma log in design: welcome heading, username and password, register button |
 | My Books | `/books` | List of your books with search, status filter, and sorting |
 | Book detail | `/books/[id]` | All info for one book, with edit and delete |
 | Add a book | `/books/new` | Form to create a book |
@@ -49,6 +49,11 @@ There are 38 tests in four files:
 - `tests/features.spec.js` — registering, logging in, create, read, update, delete, undo, filters, export
 - `tests/pages.spec.js` — every page loads, navigation links, page titles, form labels
 - `tests/media.spec.js` — cover pictures are shrunk, lazy loaded, and have alt text
+
+## The home page photo
+
+`public/library.jpg` holds the photo shown on the home page. Replace it with the
+image exported from the Figma home page frame, keeping the same file name.
 
 ## Cover pictures
 

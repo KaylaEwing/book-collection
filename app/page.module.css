@@ -1,57 +1,90 @@
-/* Figma: everything is centered in a single column */
+/* Home page. Figma: 1000px wide content, three columns, centered button. */
 .page {
   max-width: var(--content-width);
   margin: 0 auto;
-  padding: 112px 24px 80px;
+  padding: 48px 24px 72px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
 }
 
 .title {
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: 64px;
-  line-height: 1;
+  font-size: clamp(36px, 7vw, 48px);
+  line-height: 1.2;
   color: var(--color-text-light);
+  text-align: center;
 }
 
-.subtitle {
-  margin-top: 46px;
-  font-family: var(--font-display);
-  font-size: 32px;
-  line-height: 38px;
-  color: var(--color-text-light);
-}
-
-.register {
-  margin-top: 24px;
-  display: flex;
-  flex-direction: column;
+/* Quote, photo, quote. Figma: 9px between columns, 101px below the heading. */
+.quotes {
+  width: 100%;
+  margin-top: 64px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: center;
-  gap: 8px;
+  gap: 24px 9px;
 }
 
-.registerLabel {
+.quote {
   font-family: var(--font-display);
   font-size: 20px;
   line-height: 38px;
   color: var(--color-text-light);
+  text-align: center;
 }
 
-@media (max-width: 640px) {
-  .page {
-    padding-top: 56px;
+.photo {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 327 / 152;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* "Take me to my books". Figma: 231 x 49, black, white Happy Monkey 20px. */
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 231px;
+  min-height: 49px;
+  margin-top: 56px;
+  padding: 6px 20px;
+  background: var(--color-button-dark);
+  color: var(--color-text-light);
+  border-radius: 12px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  text-decoration: none;
+}
+
+.cta:hover {
+  background: #222222;
+}
+
+/* On phones and small tablets the three columns stack,
+   with the photo first so the page opens on the image. */
+@media (max-width: 760px) {
+  .quotes {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-top: 32px;
   }
 
-  .title {
-    font-size: 44px;
+  .photo {
+    order: -1;
+    aspect-ratio: 16 / 9;
   }
 
-  .subtitle {
-    margin-top: 24px;
-    font-size: 22px;
+  .quote {
+    font-size: 18px;
     line-height: 30px;
+  }
+
+  .cta {
+    margin-top: 32px;
+    width: 100%;
   }
 }
