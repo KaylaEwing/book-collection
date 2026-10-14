@@ -1,23 +1,17 @@
 // Media tests: cover pictures are shrunk before saving, are lazy loaded,
 // have set dimensions so the layout doesn't jump, and have alt text.
-import { test, expect } from "@playwright/test";
+import { test, expect, signUp, addBook, requireDatabase } from "./helpers.js";
+
+// Cover uploads go to Supabase Storage, so a configured database is required.
+requireDatabase();
 import path from "path";
 import fs from "fs";
 
 // Paths are based on the project folder, which is where Playwright runs from
 const FIXTURE = path.join(process.cwd(), "tests", "fixtures", "large-cover.png");
 
-async function signIn(page, username) {
-  await page.goto("/register");
-  await page.fill("#username", username);
-  await page.fill("#password", "password123");
-  await page.fill("#confirm", "password123");
-  await page.getByRole("button", { name: "REGISTER" }).click();
-  await page.waitForURL(/\/books$/);
-}
-
 test("a large picture is shrunk before it is saved", async ({ page }) => {
-  await signIn(page, "coveruser");
+  await signUp(page, "coveruser");
   await page.goto("/books/new");
 
   await page.setInputFiles("#cover", FIXTURE);
@@ -45,7 +39,7 @@ test("a large picture is shrunk before it is saved", async ({ page }) => {
 });
 
 test("a saved cover shows on the card and the detail page", async ({ page }) => {
-  await signIn(page, "coveruser2");
+  await signUp(page, "coveruser2");
   await page.goto("/books/new");
   await page.fill("#title", "Cover Test");
   await page.fill("#author", "A Photographer");
@@ -62,7 +56,7 @@ test("a saved cover shows on the card and the detail page", async ({ page }) => 
 });
 
 test("covers are lazy loaded and have set dimensions", async ({ page }) => {
-  await signIn(page, "lazyuser");
+  await signUp(page, "lazyuser");
   await page.goto("/books/new");
   await page.fill("#title", "Lazy Test");
   await page.fill("#author", "An Author");
@@ -80,7 +74,7 @@ test("covers are lazy loaded and have set dimensions", async ({ page }) => {
 });
 
 test("books without a cover show a placeholder instead of a broken image", async ({ page }) => {
-  await signIn(page, "nocoveruser");
+  await signUp(page, "nocoveruser");
   await page.goto("/books");
 
   // Sample books have no cover, so no image element should be there
@@ -91,7 +85,7 @@ test("books without a cover show a placeholder instead of a broken image", async
 });
 
 test("a file that isn't an image is rejected", async ({ page }) => {
-  await signIn(page, "badfileuser");
+  await signUp(page, "badfileuser");
   await page.goto("/books/new");
 
   await page.setInputFiles("#cover", {
@@ -104,7 +98,7 @@ test("a file that isn't an image is rejected", async ({ page }) => {
 });
 
 test("a cover can be removed again", async ({ page }) => {
-  await signIn(page, "removecoveruser");
+  await signUp(page, "removecoveruser");
   await page.goto("/books/new");
   await page.setInputFiles("#cover", FIXTURE);
   await expect(page.getByTestId("cover-preview")).toBeVisible();

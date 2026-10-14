@@ -38,21 +38,29 @@ function BookDetail() {
   }
 
   // Quick status change without opening the edit form
-  function changeStatus(next) {
+  async function changeStatus(next) {
     if (next === book.status) return;
-    updateBook(book.id, { status: next });
-    showToast(`Moved to "${statusLabel(next)}".`);
+    try {
+      await updateBook(book.id, { status: next });
+      showToast(`Moved to "${statusLabel(next)}".`);
+    } catch {
+      // updateBook already rolled the change back and showed the problem
+    }
   }
 
-  function handleDelete() {
-    const removed = deleteBook(book.id);
+  async function handleDelete() {
     setConfirming(false);
-    router.push("/books");
-    if (removed) {
-      showToast(`"${removed.book.title}" was deleted.`, {
-        label: "Undo",
-        onClick: () => restoreBook(removed.book, removed.index),
-      });
+    try {
+      const removed = await deleteBook(book.id);
+      router.push("/books");
+      if (removed) {
+        showToast(`"${removed.book.title}" was deleted.`, {
+          label: "Undo",
+          onClick: () => restoreBook(removed.book, removed.index),
+        });
+      }
+    } catch {
+      // deleteBook put the book back and showed the problem
     }
   }
 

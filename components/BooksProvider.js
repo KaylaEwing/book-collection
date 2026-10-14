@@ -1,86 +1,144 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { useAuth } from "./AuthProvider";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { useToast } from "./Toast";
-import { makeId, sampleBooks } from "@/lib/books";
 
-// TEMPORARY book storage in the browser, one list per user.
-// Each function here maps to a Supabase call later:
-// addBook -> insert, updateBook -> update, deleteBook -> delete, books -> select.
+// The collection now lives in the database. Every function here calls one of
+// the API routes under /api/books, which run the query as the signed-in user.
+//
+// Each change is applied to the screen first and then saved. If the save
+// fails, the change is rolled back and a message explains what happened, so
+// the list never shows something the database didn't accept.
 const BooksContext = createContext(null);
 
-const keyFor = (userId) => `bookcollection-books-${userId}`;
+async function request(url, options) {
+  const response = await fetch(url, {
+    headers: { "Content-Type": "application/json" },
+    ...options,
+  });
+
+  let payload = null;
+  try {
+    payload = await response.json();
+  } catch {
+    // An empty or non-JSON body, for example when the server is unreachable
+  }
+
+  if (!response.ok) {
+    const error = new Error(payload?.error ?? "Something went wrong. Please try again.");
+    error.status = response.status;
+    error.fieldErrors = payload?.errors ?? null;
+    throw error;
+  }
+  return payload;
+}
 
 export function BooksProvider({ children }) {
-  const { user } = useAuth();
+  const { user, ready: authReady } = useAuth();
   const { showToast } = useToast();
   const [books, setBooks] = useState([]);
   const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    setLoaded(false);
-    if (!user) {
+  const refresh = useCallback(async () => {
+    // Nothing to fetch without a database connection or a signed-in user.
+    if (!isSupabaseConfigured() || !user) {
       setBooks([]);
+      setLoaded(true);
       return;
     }
-    let stored = null;
+    setError("");
     try {
-      const raw = localStorage.getItem(keyFor(user.id));
-      stored = raw ? JSON.parse(raw) : null;
-    } catch {}
-    setBooks(stored ?? sampleBooks(user.id));
-    setLoaded(true);
+      const { books: rows } = await request("/api/books");
+      setBooks(rows);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoaded(true);
+    }
   }, [user]);
 
-  // Takes a function so every change is based on the newest list, not on a
-  // copy captured earlier. This is what stopped Undo from adding duplicates.
-  function save(updater) {
-    setBooks((current) => {
-      const next = updater(current);
-      if (user) {
-        try {
-          localStorage.setItem(keyFor(user.id), JSON.stringify(next));
-        } catch {
-          // Browser storage is limited (about 5 MB), and cover pictures use
-          // most of it, so tell the user instead of failing silently.
-          showToast("Your browser storage is full. Remove a cover picture and try again.");
-          return current;
-        }
-      }
-      return next;
-    });
-  }
+  useEffect(() => {
+    if (!authReady) return;
+    setLoaded(false);
+    refresh();
+  }, [authReady, refresh]);
 
-  function addBook(fields) {
-    const now = new Date().toISOString();
-    const book = { id: makeId(), userId: user.id, ...fields, createdAt: now, updatedAt: now };
-    save((current) => [book, ...current]);
+  async function addBook(fields) {
+    const { book } = await request("/api/books", {
+      method: "POST",
+      body: JSON.stringify(fields),
+    });
+    setBooks((current) => [book, ...current]);
     return book;
   }
 
-  function updateBook(id, fields) {
-    const now = new Date().toISOString();
-    save((current) => current.map((b) => (b.id === id ? { ...b, ...fields, updatedAt: now } : b)));
+  async function updateBook(id, fields) {
+    const previous = books;
+    // Show the change straight away so the page doesn't feel sluggish
+    setBooks((current) =>
+      current.map((b) => (b.id === id ? { ...b, ...fields, updatedAt: new Date().toISOString() } : b))
+    );
+
+    try {
+      const { book } = await request(`/api/books/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(fields),
+      });
+      setBooks((current) => current.map((b) => (b.id === id ? book : b)));
+      return book;
+    } catch (err) {
+      setBooks(previous); // put it back the way it was
+      showToast(err.message);
+      throw err;
+    }
   }
 
-  // Returns the deleted book and its position so it can be put back (Undo)
-  function deleteBook(id) {
+  async function deleteBook(id) {
     const index = books.findIndex((b) => b.id === id);
     if (index === -1) return null;
-    const removed = books[index];
-    save((current) => current.filter((b) => b.id !== id));
-    return { book: removed, index };
+    const previous = books;
+
+    setBooks((current) => current.filter((b) => b.id !== id));
+
+    try {
+      const { book } = await request(`/api/books/${id}`, { method: "DELETE" });
+      return { book, index };
+    } catch (err) {
+      setBooks(previous);
+      showToast(err.message);
+      throw err;
+    }
   }
 
-  function restoreBook(book, index) {
-    save((current) => {
-      // Don't add it twice if Undo is somehow clicked more than once
-      if (current.some((b) => b.id === book.id)) return current;
-      const next = [...current];
-      next.splice(Math.min(index, next.length), 0, book);
-      return next;
-    });
+  // Undo after a delete: the book is written back to the database with the
+  // same details, and put back where it was in the list.
+  async function restoreBook(book, index) {
+    try {
+      const { book: saved } = await request("/api/books", {
+        method: "POST",
+        body: JSON.stringify({
+          title: book.title,
+          author: book.author,
+          status: book.status,
+          rating: book.rating,
+          notes: book.notes,
+          cover: book.cover,
+        }),
+      });
+      setBooks((current) => {
+        if (current.some((b) => b.id === saved.id)) return current;
+        const next = [...current];
+        next.splice(Math.min(index, next.length), 0, saved);
+        return next;
+      });
+      return saved;
+    } catch (err) {
+      showToast("That book couldn't be restored. Please add it again.");
+      throw err;
+    }
   }
 
   function getBook(id) {
@@ -88,7 +146,9 @@ export function BooksProvider({ children }) {
   }
 
   return (
-    <BooksContext.Provider value={{ books, loaded, addBook, updateBook, deleteBook, restoreBook, getBook }}>
+    <BooksContext.Provider
+      value={{ books, loaded, error, refresh, addBook, updateBook, deleteBook, restoreBook, getBook }}
+    >
       {children}
     </BooksContext.Provider>
   );

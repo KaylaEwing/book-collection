@@ -1,15 +1,9 @@
 // Page-by-page checks: every page loads, has one main heading, and the
 // navigation links go where they say they go.
-import { test, expect } from "@playwright/test";
+import { test, expect, signUp, addBook, requireDatabase } from "./helpers.js";
 
-async function signIn(page, username) {
-  await page.goto("/register");
-  await page.fill("#username", username);
-  await page.fill("#password", "password123");
-  await page.fill("#confirm", "password123");
-  await page.getByRole("button", { name: "REGISTER" }).click();
-  await page.waitForURL(/\/books$/);
-}
+// These walk the signed-in pages, so a configured database is required.
+requireDatabase();
 
 const GUEST_PAGES = [
   { path: "/", heading: "Let’s read!" },
@@ -51,7 +45,7 @@ test("navigation links work for a visitor", async ({ page }) => {
 });
 
 test("navigation links work for a logged-in user", async ({ page }) => {
-  await signIn(page, "navuser");
+  await signUp(page, "navuser");
 
   await page.getByRole("navigation").getByRole("link", { name: "Add a Book" }).click();
   await expect(page).toHaveURL(/\/books\/new$/);
@@ -64,7 +58,7 @@ test("navigation links work for a logged-in user", async ({ page }) => {
 });
 
 test("the current page is marked in the navigation", async ({ page }) => {
-  await signIn(page, "currentuser");
+  await signUp(page, "currentuser");
   await page.goto("/about");
   await expect(page.getByRole("navigation").getByRole("link", { name: "About" })).toHaveAttribute("aria-current", "page");
 });
@@ -82,7 +76,7 @@ test("the home page button sends visitors to log in and members to their books",
   await page.getByRole("link", { name: "Take me to my books" }).click();
   await expect(page).toHaveURL(/\/login$/);
 
-  await signIn(page, "homebutton");
+  await signUp(page, "homebutton");
   await page.goto("/");
   await page.getByRole("link", { name: "Take me to my books" }).click();
   await expect(page).toHaveURL(/\/books$/);
@@ -96,7 +90,7 @@ test("page titles change between pages", async ({ page }) => {
 });
 
 test("every form field has a label", async ({ page }) => {
-  await signIn(page, "labeluser");
+  await signUp(page, "labeluser");
   await page.goto("/books/new");
   await page.locator("#title").waitFor(); // wait for the form to render
 
@@ -114,14 +108,14 @@ test("every form field has a label", async ({ page }) => {
 });
 
 test("cancel on the add form returns to the collection", async ({ page }) => {
-  await signIn(page, "canceluser");
+  await signUp(page, "canceluser");
   await page.goto("/books/new");
   await page.getByRole("button", { name: "CANCEL" }).click();
   await expect(page).toHaveURL(/\/books$/);
 });
 
 test("logging out hides the book pages again", async ({ page }) => {
-  await signIn(page, "logoutuser");
+  await signUp(page, "logoutuser");
   await page.getByRole("button", { name: "Log out" }).click();
   await expect(page).toHaveURL(/\/$/);
   await page.goto("/books");

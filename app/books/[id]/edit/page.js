@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import RequireAuth from "@/components/RequireAuth";
@@ -12,6 +13,7 @@ function EditBook() {
   const router = useRouter();
   const { getBook, updateBook, loaded } = useBooks();
   const { showToast } = useToast();
+  const [saveError, setSaveError] = useState("");
 
   if (!loaded) return <p className="status-text">Loading…</p>;
 
@@ -27,17 +29,26 @@ function EditBook() {
     );
   }
 
+  async function handleSubmit(fields) {
+    setSaveError("");
+    try {
+      await updateBook(book.id, fields);
+      router.push(`/books/${book.id}`);
+      showToast("Your changes were saved.");
+    } catch (err) {
+      setSaveError(err.message);
+      throw err;
+    }
+  }
+
   return (
     <>
       <h1 className="page-title">Edit book</h1>
+      {saveError && <p className="error-text" role="alert">{saveError}</p>}
       <BookForm
         initial={book}
         submitLabel="SAVE CHANGES"
-        onSubmit={(fields) => {
-          updateBook(book.id, fields);
-          router.push(`/books/${book.id}`);
-          showToast("Your changes were saved.");
-        }}
+        onSubmit={handleSubmit}
         onCancel={() => router.push(`/books/${book.id}`)}
       />
     </>

@@ -5,45 +5,50 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 import styles from "./LoginForm.module.css";
 
-// Log in form from the Figma "Login" frame. Used on the homepage and /login.
+// Logs in through Supabase Auth with an email address and password.
 export default function LoginForm() {
   const { login } = useAuth();
   const router = useRouter();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
-    if (!username.trim() || !password) {
-      setError("Enter your username and password to log in.");
+    if (!email.trim() || !password) {
+      setError("Enter your email and password to log in.");
       return;
     }
 
-    // TODO (backend): replace with supabase.auth.signInWithPassword()
-    const result = login(username);
+    setBusy(true);
+    setError("");
+    const result = await login({ email: email.trim(), password });
+    setBusy(false);
+
     if (result.error) {
       setError(result.error);
       return;
     }
     router.push("/books");
+    router.refresh(); // let the server pick up the new session cookie
   }
 
   return (
     <form className={styles.form} onSubmit={handleSubmit} noValidate>
       <div className={styles.row}>
-        <label htmlFor="username" className={styles.label}>
-          Username:
+        <label htmlFor="email" className={styles.label}>
+          Email:
         </label>
         <input
-          id="username"
-          name="username"
-          type="text"
-          autoComplete="username"
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
           className={styles.input}
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
       </div>
 
@@ -62,8 +67,8 @@ export default function LoginForm() {
         />
       </div>
 
-      <button type="submit" className="btn-light">
-        LOG IN
+      <button type="submit" className="btn-light" disabled={busy}>
+        {busy ? "LOGGING IN…" : "LOG IN"}
       </button>
 
       <p className={styles.message} role="alert">

@@ -4,11 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 
+// Creates an account with Supabase Auth. The password is hashed and stored by
+// Supabase; the username is saved with the account and copied into the
+// profiles table by a database trigger.
 export default function RegisterForm() {
   const { register } = useAuth();
   const router = useRouter();
-  const [values, setValues] = useState({ username: "", password: "", confirm: "" });
+  const [values, setValues] = useState({ username: "", email: "", password: "", confirm: "" });
   const [errors, setErrors] = useState({});
+  const [notice, setNotice] = useState("");
+  const [busy, setBusy] = useState(false);
 
   function update(e) {
     setValues({ ...values, [e.target.name]: e.target.value });
@@ -17,28 +22,42 @@ export default function RegisterForm() {
   function validate() {
     const next = {};
     if (values.username.trim().length < 3) next.username = "Use at least 3 characters.";
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(values.email.trim())) next.email = "Enter a valid email address.";
     if (values.password.length < 8) next.password = "Use at least 8 characters.";
     if (values.confirm !== values.password) next.confirm = "The passwords don't match.";
     return next;
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     const found = validate();
     setErrors(found);
     if (Object.keys(found).length) return;
 
-    // TODO (backend): replace with supabase.auth.signUp()
-    const result = register(values.username);
+    setBusy(true);
+    setNotice("");
+    const result = await register({
+      email: values.email.trim(),
+      password: values.password,
+      username: values.username.trim(),
+    });
+    setBusy(false);
+
     if (result.error) {
-      setErrors({ username: result.error });
+      setErrors({ email: result.error });
+      return;
+    }
+    if (result.needsConfirmation) {
+      setNotice("Check your email for a confirmation link, then log in.");
       return;
     }
     router.push("/books");
+    router.refresh();
   }
 
   const fields = [
-    { name: "username", label: "Username", type: "text", auto: "username" },
+    { name: "username", label: "Username", type: "text", auto: "username", hint: "Shown in the navigation bar" },
+    { name: "email", label: "Email", type: "email", auto: "email" },
     { name: "password", label: "Password", type: "password", auto: "new-password", hint: "At least 8 characters" },
     { name: "confirm", label: "Confirm password", type: "password", auto: "new-password" },
   ];
@@ -65,8 +84,13 @@ export default function RegisterForm() {
           )}
         </div>
       ))}
+
+      {notice && <p className="lead" role="status">{notice}</p>}
+
       <div className="button-row center-row">
-        <button type="submit" className="btn-light">REGISTER</button>
+        <button type="submit" className="btn-light" disabled={busy}>
+          {busy ? "CREATING…" : "REGISTER"}
+        </button>
       </div>
     </form>
   );

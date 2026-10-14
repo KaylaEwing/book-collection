@@ -15,12 +15,13 @@ export default function BookForm({ initial, submitLabel, onSubmit, onCancel }) {
       : EMPTY
   );
   const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
 
   function update(e) {
     setValues({ ...values, [e.target.name]: e.target.value });
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     const found = {};
     if (!values.title.trim()) found.title = "Enter the book's title.";
@@ -31,14 +32,20 @@ export default function BookForm({ initial, submitLabel, onSubmit, onCancel }) {
       return;
     }
 
-    onSubmit({
-      title: values.title.trim(),
-      author: values.author.trim(),
-      status: values.status,
-      rating: values.rating ? Number(values.rating) : null,
-      notes: values.notes.trim(),
-      cover: values.cover ?? null,
-    });
+    setSaving(true);
+    try {
+      await onSubmit({
+        title: values.title.trim(),
+        author: values.author.trim(),
+        status: values.status,
+        rating: values.rating ? Number(values.rating) : null,
+        notes: values.notes.trim(),
+        cover: values.cover ?? null,
+      });
+    } catch {
+      // The page above shows the message; just let the user try again
+      setSaving(false);
+    }
   }
 
   const describe = (name) => (errors[name] ? `${name}-error` : undefined);
@@ -93,8 +100,10 @@ export default function BookForm({ initial, submitLabel, onSubmit, onCancel }) {
       </div>
 
       <div className="button-row">
-        <button type="submit" className="btn-light">{submitLabel}</button>
-        <button type="button" className="btn-light btn-light-outline" onClick={onCancel}>
+        <button type="submit" className="btn-light" disabled={saving}>
+          {saving ? "SAVING…" : submitLabel}
+        </button>
+        <button type="button" className="btn-light btn-light-outline" onClick={onCancel} disabled={saving}>
           CANCEL
         </button>
       </div>

@@ -1,25 +1,8 @@
 // Feature tests for the CRUD pages and this week's new features.
-import { test, expect } from "@playwright/test";
+import { test, expect, signUp, addBook, requireDatabase } from "./helpers.js";
 
-async function signIn(page, username) {
-  await page.goto("/register");
-  await page.fill("#username", username);
-  await page.fill("#password", "password123");
-  await page.fill("#confirm", "password123");
-  await page.getByRole("button", { name: "REGISTER" }).click();
-  await page.waitForURL("**/books");
-}
-
-async function addBook(page, title, author, status = "want", rating = "") {
-  await page.goto("/books/new");
-  await page.fill("#title", title);
-  await page.fill("#author", author);
-  await page.selectOption("#status", status);
-  await page.selectOption("#rating", rating);
-  await page.getByRole("button", { name: "SAVE BOOK" }).click();
-  // "**/books/*" also matches /books/new, so match the detail page exactly
-  await page.waitForURL(/\/books\/(?!new)[^/]+$/);
-}
+// Every test here signs up a real account, so a configured database is required.
+requireDatabase();
 
 test("book pages are private until you log in", async ({ page }) => {
   await page.goto("/books");
@@ -27,7 +10,7 @@ test("book pages are private until you log in", async ({ page }) => {
 });
 
 test("a book can be created, edited, and deleted", async ({ page }) => {
-  await signIn(page, "crud1");
+  await signUp(page, "crud1");
 
   await addBook(page, "Dracula", "Bram Stoker", "read", "4");
   await expect(page.getByRole("heading", { name: "Dracula" })).toBeVisible();
@@ -48,7 +31,7 @@ test("a book can be created, edited, and deleted", async ({ page }) => {
 });
 
 test("undo puts a deleted book back", async ({ page }) => {
-  await signIn(page, "undo1");
+  await signUp(page, "undo1");
   await addBook(page, "Persuasion", "Jane Austen");
 
   await page.getByRole("button", { name: "Delete book" }).click();
@@ -61,7 +44,7 @@ test("undo puts a deleted book back", async ({ page }) => {
 });
 
 test("the reading status can be changed in one click", async ({ page }) => {
-  await signIn(page, "status1");
+  await signUp(page, "status1");
   await addBook(page, "Emma", "Jane Austen", "want");
 
   await page.getByRole("button", { name: "Reading", exact: true }).click();
@@ -72,7 +55,7 @@ test("the reading status can be changed in one click", async ({ page }) => {
 });
 
 test("search and filters are saved in the address bar", async ({ page }) => {
-  await signIn(page, "filter1");
+  await signUp(page, "filter1");
   await addBook(page, "Beowulf", "Unknown", "read");
 
   await page.goto("/books");
@@ -87,7 +70,7 @@ test("search and filters are saved in the address bar", async ({ page }) => {
 });
 
 test("required fields are checked before saving", async ({ page }) => {
-  await signIn(page, "valid1");
+  await signUp(page, "valid1");
   await page.goto("/books/new");
   await page.getByRole("button", { name: "SAVE BOOK" }).click();
   await expect(page.getByText("Enter the book's title.")).toBeVisible();
@@ -95,7 +78,7 @@ test("required fields are checked before saving", async ({ page }) => {
 });
 
 test("the reading summary counts books correctly", async ({ page }) => {
-  await signIn(page, "stats1");
+  await signUp(page, "stats1");
 
   const finished = page.locator("dt", { hasText: "Finished" }).locator("xpath=following-sibling::dd[1]");
   await page.goto("/books");
@@ -109,7 +92,7 @@ test("the reading summary counts books correctly", async ({ page }) => {
 });
 
 test("the collection can be exported to a file", async ({ page }) => {
-  await signIn(page, "exportuser");
+  await signUp(page, "exportuser");
   await addBook(page, "Exported Book", "Some Author", "read", "5");
   await page.goto("/books");
 
@@ -129,7 +112,7 @@ test("the collection can be exported to a file", async ({ page }) => {
 });
 
 test("notes are limited to 500 characters", async ({ page }) => {
-  await signIn(page, "notesuser");
+  await signUp(page, "notesuser");
   await page.goto("/books/new");
   await page.fill("#notes", "x".repeat(600));
   await expect(page.locator("#notes")).toHaveValue("x".repeat(500));
@@ -137,10 +120,10 @@ test("notes are limited to 500 characters", async ({ page }) => {
 });
 
 test("each user only sees their own books", async ({ page }) => {
-  await signIn(page, "userone");
+  await signUp(page, "userone");
   await addBook(page, "Private Book", "Only Mine");
   await page.getByRole("button", { name: "Log out" }).click();
 
-  await signIn(page, "usertwo");
+  await signUp(page, "usertwo");
   await expect(page.getByTestId("book-grid").getByText("Private Book")).toHaveCount(0);
 });

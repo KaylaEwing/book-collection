@@ -1,5 +1,6 @@
 import Link from "next/link";
 import LoginForm from "@/components/LoginForm";
+import SetupNotice from "@/components/SetupNotice";
 import styles from "./login.module.css";
 
 export const metadata = { title: "Log in | Book Collection" };
@@ -14,6 +15,7 @@ export default function LoginPage() {
         Please register for an account or log in below:
       </p>
 
+      <SetupNotice />
       <LoginForm />
 
       <section className={styles.register} aria-labelledby="register-label">

@@ -22,12 +22,12 @@ function colorFor(title) {
 export default function BookCover({ book, size = "card" }) {
   const className = `${styles.cover} ${size === "detail" ? styles.detail : styles.card}`;
 
-  if (book.cover?.dataUrl) {
+  if (book.cover?.url) {
     return (
       // width and height are set so the page doesn't jump while the image
       // loads, and loading="lazy" keeps off-screen covers from downloading
       <img
-        src={book.cover.dataUrl}
+        src={book.cover.url}
         alt={`Cover of ${book.title}`}
         width={book.cover.width}
         height={book.cover.height}

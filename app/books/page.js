@@ -12,7 +12,7 @@ import { STATUSES, SORT_OPTIONS, statusLabel } from "@/lib/books";
 import styles from "./books.module.css";
 
 function BookList() {
-  const { books, loaded } = useBooks();
+  const { books, loaded, error, refresh } = useBooks();
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -58,6 +58,18 @@ function BookList() {
   }, [books, query, status, sort]);
 
   if (!loaded) return <p className="status-text">Loading your books…</p>;
+
+  if (error) {
+    return (
+      <div className="panel center">
+        <h2 className="page-title">Your books couldn't be loaded</h2>
+        <p className="lead">{error}</p>
+        <div className="button-row center-row">
+          <button type="button" className="btn-dark" onClick={refresh}>Try again</button>
+        </div>
+      </div>
+    );
+  }
 
   const tabs = [{ value: "all", label: "All" }, ...STATUSES];
   const filtering = query.trim() !== "" || status !== "all";

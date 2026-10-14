@@ -2,11 +2,15 @@
 
 import Link from "next/link";
 import { useAuth } from "./AuthProvider";
+import SetupNotice from "./SetupNotice";
 
-// Shows the page only to logged-in users.
+// Shows the page only to logged-in users. The API routes check this again on
+// the server, and Row Level Security checks it a third time in the database,
+// so hiding the page here is a convenience, not the security itself.
 export default function RequireAuth({ children }) {
-  const { user, ready } = useAuth();
+  const { user, ready, configured } = useAuth();
 
+  if (!configured) return <SetupNotice />;
   if (!ready) return <p className="status-text">Loading…</p>;
 
   if (!user) {

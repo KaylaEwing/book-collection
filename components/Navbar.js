@@ -20,7 +20,7 @@ const guestLinks = [
 ];
 
 export default function Navbar() {
-  const { user, logout } = useAuth();
+  const { user, username, logout } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -30,9 +30,10 @@ export default function Navbar() {
 
   const links = user ? memberLinks : guestLinks;
 
-  function handleLogout() {
-    logout();
+  async function handleLogout() {
+    await logout();
     router.push("/");
+    router.refresh();
   }
 
   return (
@@ -69,7 +70,7 @@ export default function Navbar() {
 
           {user ? (
             <div className={styles.account}>
-              <span className={styles.user}>Hi, {user.username}</span>
+              <span className={styles.user}>Hi, {username}</span>
               <button type="button" className={styles.button} onClick={handleLogout}>
                 Log out
               </button>

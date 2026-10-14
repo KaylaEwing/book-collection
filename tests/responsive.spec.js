@@ -3,7 +3,10 @@
 // sideways scrolling, that the navigation collapses into a menu on small
 // screens, that the book cards change column count, and that buttons stay
 // big enough to tap.
-import { test, expect } from "@playwright/test";
+import { test, expect, signUp, addBook, requireDatabase } from "./helpers.js";
+
+// The layout checks visit signed-in pages, so a configured database is required.
+requireDatabase();
 
 const SIZES = [
   { name: "small phone", width: 320, height: 720 },
@@ -16,20 +19,11 @@ const SIZES = [
 const PAGES = ["/", "/register", "/login", "/about", "/books", "/books/new"];
 
 // Creates an account so the book pages can be tested
-async function signIn(page, username = "testuser") {
-  await page.goto("/register");
-  await page.fill("#username", username);
-  await page.fill("#password", "password123");
-  await page.fill("#confirm", "password123");
-  await page.getByRole("button", { name: "REGISTER" }).click();
-  await page.waitForURL("**/books");
-}
-
 test.describe("layout fits every screen size", () => {
   for (const size of SIZES) {
     test(`no sideways scrolling on a ${size.name} (${size.width}px)`, async ({ page }) => {
       await page.setViewportSize({ width: size.width, height: size.height });
-      await signIn(page, `user${size.width}`);
+      await signUp(page, `user${size.width}`);
 
       for (const path of PAGES) {
         await page.goto(path);
@@ -67,7 +61,7 @@ test("navigation links show without a menu button on desktop", async ({ page }) 
 });
 
 test("book cards go from one column on a phone to several on desktop", async ({ page }) => {
-  await signIn(page, "griduser");
+  await signUp(page, "griduser");
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/books");
@@ -85,7 +79,7 @@ test("book cards go from one column on a phone to several on desktop", async ({ 
 
 test("buttons stay big enough to tap on a phone", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await signIn(page, "tapuser");
+  await signUp(page, "tapuser");
   await page.goto("/books");
 
   // Only the site's own buttons. While `npm run dev` is running, Next.js adds
@@ -103,7 +97,7 @@ test("buttons stay big enough to tap on a phone", async ({ page }) => {
 
 test("images and text never force a horizontal scrollbar on a long book", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 720 });
-  await signIn(page, "longuser");
+  await signUp(page, "longuser");
   await page.goto("/books/new");
   await page.fill("#title", "Supercalifragilisticexpialidocious".repeat(2));
   await page.fill("#author", "A".repeat(60));

@@ -2,7 +2,8 @@
 
 A personal book collection website. Each user can add, view, search, edit, and delete their own books.
 
-Built with Next.js (App Router). Supabase and PostgreSQL will be added for accounts and data starting Oct 13.
+Built with Next.js (App Router), Supabase Auth, and PostgreSQL. Accounts, books, and cover
+pictures are all stored in the database; nothing is kept in the browser any more.
 
 ## Pages
 
@@ -10,12 +11,49 @@ Built with Next.js (App Router). Supabase and PostgreSQL will be added for accou
 |---|---|---|
 | Home | `/` | Landing page from the Figma home page design, with the "Take me to my books" button |
 | Register | `/register` | Create an account |
-| Log in | `/login` | The Figma log in design: welcome heading, username and password, register button |
+| Log in | `/login` | The Figma log in design: welcome heading, email and password, register button |
 | My Books | `/books` | List of your books with search, status filter, and sorting |
 | Book detail | `/books/[id]` | All info for one book, with edit and delete |
 | Add a book | `/books/new` | Form to create a book |
 | Edit book | `/books/[id]/edit` | Form to update a book |
 | About | `/about` | What the project is |
+
+## Setting up the database
+
+The site needs a Supabase project before it will do anything. This is a one-time setup.
+
+1. **Create the project.** Sign in at supabase.com, click **New project**, and pick any
+   name and a database password. Wait for it to finish starting up.
+
+2. **Create the tables.** In the Supabase dashboard open **SQL Editor -> New query**,
+   paste in the whole of `supabase/schema.sql`, and click **Run**. This creates the
+   `books` and `profiles` tables, the storage bucket for cover pictures, the triggers,
+   and every Row Level Security policy.
+
+3. **Copy the two keys.** Go to **Project Settings -> API** and copy the *Project URL*
+   and the *anon public* key.
+
+4. **Add them locally.** Copy `.env.example` to `.env.local` and paste both values in:
+
+   ```bash
+   cp .env.example .env.local
+   ```
+
+   `.env.local` is listed in `.gitignore` and must never be committed.
+
+5. **Check it worked.**
+
+   ```bash
+   npm run check:db
+   ```
+
+   This connects and reports on the tables, the storage bucket, and whether Row Level
+   Security is switched on.
+
+6. **Add the same two variables to Vercel.** In the Vercel project, go to
+   **Settings -> Environment Variables**, add `NEXT_PUBLIC_SUPABASE_URL` and
+   `NEXT_PUBLIC_SUPABASE_ANON_KEY`, then redeploy. Without this step the deployed
+   site shows a "Database not connected" notice instead of working.
 
 ## Run it on your computer
 
@@ -26,22 +64,39 @@ npm run dev
 
 Then open http://localhost:3000.
 
-## Current data storage (temporary)
+## How the data is stored
 
-Until the backend is built, accounts and books are saved in the browser with `localStorage`.
-The functions in `components/AuthProvider.js` and `components/BooksProvider.js` are the only
-places that need to change when switching to Supabase.
+| What | Where |
+|---|---|
+| Accounts and passwords | Supabase Auth (`auth.users`), hashed by Supabase; this code never sees a password |
+| Usernames | `public.profiles`, created automatically by a trigger when someone signs up |
+| Books | `public.books`, one row per book, tied to its owner by `user_id` |
+| Cover pictures | The `covers` storage bucket, each user inside a folder named after their own id |
+
+Every table has Row Level Security switched on, so the database itself refuses to return
+one person's books to anyone else, even if the application code had a bug.
 
 ## Tests
 
 The project uses Playwright for automated browser tests.
 
 ```bash
+npm run test:unit        # validation rules; needs no database or browser
 npx playwright install   # one time only, downloads the test browser
-npm test                 # runs every test
-npm run test:responsive  # runs only the responsive design tests
+npm test                 # the full browser suite; needs a configured database
+npm run test:responsive  # just the responsive design tests
 npm run test:ui          # opens the test runner in a window
+npm run check:db         # checks the live Supabase project is set up correctly
 ```
+
+The browser tests sign up real accounts, so they skip themselves with a message if
+`.env.local` has not been filled in yet.
+
+`tests/sql/` holds the checks used to prove the database rules work: `00-supabase-stubs.sql`
+recreates the parts of Supabase that `schema.sql` relies on, and `01-rls-test.sql` then
+confirms that one account cannot read, change, or delete another account's books. They are
+written for a throwaway local Postgres database. **Do not run them against the real
+project** — the test script clears the tables before it starts.
 
 There are 38 tests in four files:
 
